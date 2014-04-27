@@ -8,6 +8,10 @@ and subdirectories as detail in README.txt (the relevant files are present in th
 it does not include the Inertial Signals
 data as it was felt that the files in those folders were not needed as it had already been summarised.
 
+To get the data you load and run the run_analysis.R script.   Then you can load the data as follows:
+
+summary_data <- run_analysis()
+
 README.txt is the file that comes with the data set.    As mentioned above it describes the data files
 contained in this folder.
 
