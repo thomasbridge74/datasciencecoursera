@@ -1,8 +1,7 @@
 # This script runs the commands to merge the two data sets.
 
-# run_analysis <- function() {
+run_analysis <- function() {
   
-
 # The assumption is we're in the root folder of the data set.   Further,
 # I am explicitly assuming that we have already downloaded and unzipped the 
 # data file.
@@ -42,15 +41,24 @@ jointdata <- rbind(testing_data,training_data)
 # The below command creates a subset of the headers containing mean and std (but 
 # explicitly excluding MeanFreq type variables and uses them along with subject and
 # activity fields to create a new frame meeting the requirement)
-# c("subject", "activity", names(jointdata)[grep("mean\\.|std", names(jointdata))])
 
-refresh <- jointdata[, c("subject", "activity", names(jointdata)[grep("mean\\.|std", names(jointdata))])]
+means_and_stds <- jointdata[, c("subject", "activity", names(jointdata)[grep("mean\\.|std", names(jointdata))])]
 
 # 3. Uses descriptive activity names to name the activities in the data set
 
+# As discussed in the forums, this is a little and ambigious combined with Step 4.
+# I am interpreting this as a requirement to reading the activity labels
+
+activity_labels <- read.table("activity_labels.txt", col.names = c("id", "text"))
+
 # 4. Appropriately labels the data set with descriptive activity names. 
+
+means_and_stds <- merge(means_and_stds, activity_labels, by.x="activity", by.y="id")
+means_and_stds$activity <- NULL
 
 # 5. Creates a second, independent tidy data set with the average of each 
 #    variable for each activity and each subject. 
 
-#}
+melted_means <- melt(means_and_stds, id=c("subject", "text"))
+means_summary <- dcast(melted_means, subject + text ~ variable, mean)
+}
