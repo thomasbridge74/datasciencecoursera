@@ -3,11 +3,42 @@
 
 ## Loading and preprocessing the data
 
+```{r loaddata}
+unzip("activity.zip")
+activity <- read.csv("activity.csv", colClasses = c("integer", "Date", "character"))
+na_steps <- sum(is.na(activity$steps))
+na_date <- sum(is.na(activity$date))
+na_interval <- sum(is.na(activity$interval))
+summary(activity)
+```
+
+We can see that there are `r na_steps` data points with NA for the number of steps taken.   Therefore the next step
+is to remove the NA data from the data set.
+
+```{r cleandata}
+activity_clean <- activity[!is.na(activity$steps), ]
+summary(activity_clean)
+```
 
 
 ## What is mean total number of steps taken per day?
 
 
+```{r tableofmeans,results="asis"}
+steps_by_day <- tapply(activity_clean$steps, activity_clean$date, sum)
+library(xtable)
+print(xtable(as.data.frame(steps_by_day), caption="Daily Total number of steps"), type="html")
+```
+
+Here is a histogram:
+
+```{r histogram}
+hist(steps_by_day, main="Histogram showing the spread of the total number of steps per day", breaks = c(0, 500, 5000, 10000, 15000, 20000, 25000), freq=TRUE)
+mean_steps <- mean(steps_by_day)
+median_steps <- median(steps_by_day)
+```
+
+We have an average of `r mean_steps` steps being taken per day, with a median of `r median_steps`
 
 ## What is the average daily activity pattern?
 
