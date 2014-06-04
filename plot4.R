@@ -7,7 +7,7 @@ sub_elec <- electricity[electricity$Date ==  "2007-02-01" | electricity$Date == 
 sub_elec$datetime <- strptime(paste(sub_elec$Date,sub_elec$Time), format = "%Y-%m-%d %H:%M:%S")
 
 # Setup four panels in the plot.
-
+png("plot4.png")
 par(mfcol = c(2,2))
 
 # Top left panel.
@@ -29,3 +29,8 @@ with(sub_elec, plot(datetime, Voltage, type = "l"))
 # Bottom right panel
 
 with(sub_elec, plot(datetime, Global_reactive_power, type = "l"))
+
+dev.off()
+
+
+
