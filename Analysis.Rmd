@@ -1,20 +1,58 @@
 ---
-title: "Analysis"
+title: "Practical Machine Learning Course Project"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Introduction
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The rollout of fitness devices that can measure various physical attributes of individuals who are working out at the gym has created a huge amount of data.
+As part of an experiment, researchers looked at the measurements for barbell lifts executed correctly and incorrectly in four defined ways.    We use this data set to see 
+if we can accurately predict which method the athlete is using from the data collected.
+We find ...
 
-```{r}
-summary(cars)
+## Initial research of the data.
+
+This section assumes that the data set stored at <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv> has been saved in the working director.
+
+```{r, cache=TRUE}
+library(caret)
+dataset <- read.csv("pml-training.csv")
+# Remove the first variable which acts as the row number
+dataset <- dataset[, -1]
 ```
 
-You can also embed plots, for example:
+Viewing a summary of the data set shows that for a number of the columns, the data is 
+almost all NA (typical 19216 out of 19222 records are NA) or the data is simply not there.    For convienence, we will 
+remove these immediately from the dataset.   The dataset then contains a number of columns that appear to be related to the timing of the measurement.   I assume that these
+time slots should not impact the measurements so I further remove them (they are columns 2 to 6 in the dataset)
 
-```{r, echo=FALSE}
-plot(cars)
+We will use 70% of this data to create our training set, and 30% to validate our model.
+
+
+```{r, cache=TRUE}
+dataset <- dataset[, apply(dataset, 2, function(x) sum(is.na(x)) < 19000)]
+dataset <- dataset[, apply(dataset, 2, function(x) sum(x=="") < 19000)]
+dataset <- dataset[, c(1, 7:59)]
+set.seed(1958)
+inTrain <- createDataPartition(y=dataset$classe, p=0.7, list=FALSE)
+training <- dataset[inTrain, ]
+testing <- dataset[-inTrain, ]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Training the model.    
+
+As we have 53 variables, and a number of discrete, non ordered outputs I chose to 
+train the data using randomForest.    This shows an estimated OOB error rate of 0.49%
+Fitting to the testing data we can see an accuracy
+report of about 99.2% - a little less than the estimated error rate but still high enough to not be a major concern about the model fit.
+
+```{r cache=TRUE}
+library(randomForest)
+rfmod <- randomForest(classe ~ ., data = training)
+rfmod
+pred <- predict(rfmod, testing)
+confusionMatrix(testing$classe, pred)
+```
+
+
+
