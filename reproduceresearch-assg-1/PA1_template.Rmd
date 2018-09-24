@@ -1,0 +1,93 @@
+# Reproducible Research: Peer Assessment 1
+
+## Loading and preprocessing the data
+
+```{r loaddata}
+unzip("activity.zip")
+activity <- read.csv("activity.csv", colClasses = c("integer", "Date", "integer"))
+na_steps <- sum(is.na(activity$steps))
+na_date <- sum(is.na(activity$date))
+na_interval <- sum(is.na(activity$interval))
+summary(activity)
+```
+
+We can see that there are `r na_steps` data points with NA for the number of steps taken.   Therefore the next step
+is to remove the NA data from the data set.   As we may need the original set later on, we create a seperate data set with the cleaned up data.
+
+```{r cleandata}
+activity_clean <- activity[!is.na(activity$steps), ]
+summary(activity_clean)
+```
+
+## What is mean total number of steps taken per day?
+
+Firstly we need to calculate the total number of steps taken per day, and then we need to get the mean and median of that data set.
+```{r tableofmeans,results="asis"}
+steps_by_day <- tapply(activity_clean$steps, activity_clean$date, sum)
+library(xtable)
+## print(xtable(as.data.frame(steps_by_day), caption="Daily Total number of steps"), type="html")
+```
+
+We're asked to produce a histogram:
+
+```{r histogram,echo=FALSE,warnings=FALSE}
+options(scipen = 1, digits = 0)
+hist(steps_by_day, main="Histogram showing the spread of the total number of steps per day", )
+mean_steps <- mean(steps_by_day)
+median_steps <- median(steps_by_day)
+```
+
+We have an average of `r mean_steps` steps being taken per day, with a median of `r median_steps`
+
+## What is the average daily activity pattern?
+
+The following plot shows the average number of steps taken in each interval, averaged over all the days.
+
+```{r intervalmeans, echo=FALSE}
+steps_by_interval <- tapply(activity_clean$steps, activity_clean$interval, mean)
+plot(rownames(steps_by_interval), steps_by_interval, type = "l")
+```
+
+The time interval with the maximum average number of steps is `r names(steps_by_interval[steps_by_interval == max(steps_by_interval)])`
+
+## Inputing missing values
+
+The assigned scheme is to use the average time for the interval to replace the NA values.   As mentioned above there are `r na_steps` data points with NA for the number of steps taken.  
+
+```{r fileinnas}
+filledin_data <- activity
+for (key in rownames(steps_by_interval)) {
+  filledin_data[is.na(filledin_data$steps & filledin_data$interval == key), ]$steps <- steps_by_interval[key]
+}
+filled_steps_by_day <- tapply(filledin_data$steps, filledin_data$date, sum)
+filled_mean_steps <- mean(filled_steps_by_day)
+filled_median_steps <- median(filled_steps_by_day)
+hist(filled_steps_by_day, main="Total number of steps per day with filled in values", )
+```
+
+The revised mean is `r filled_mean_steps` and the revised median is
+`r filled_median_steps`
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+For this section, I assume that we use the filled in data set for this section.
+```{r weekday}
+
+# We create a new column in the data set, daytype.   Default is "weekday", but then
+# rewrite as "weekend" where the day is either Sunday or Saturday
+
+filledin_data$daytype <- "weekday"
+filledin_data$daytype[weekdays(filledin_data$date) == "Sunday"] <- "weekend"
+filledin_data$daytype[weekdays(filledin_data$date) == "Saturday"] <- "weekend"
+
+weekday_steps_by_interval <- tapply(filledin_data[filledin_data$daytype=="weekday",]$steps, filledin_data[filledin_data$daytype=="weekday",]$interval, mean)
+weekend_steps_by_interval <- tapply(filledin_data[filledin_data$daytype=="weekend",]$steps, filledin_data[filledin_data$daytype=="weekend",]$interval, mean)
+
+par(mfrow=c(2,1))
+plot(rownames(weekend_steps_by_interval), weekend_steps_by_interval, type="l", ylab="Steps in interval", xlab="Interval", main="Weekend")
+plot(rownames(weekday_steps_by_interval), weekday_steps_by_interval, type="l", ylab="Steps in interval", xlab="Interval", main="Weekday")
+
+# for the panel plot we need two sets of means - one for the weekday and one
+# for the weekend.
+
+```
